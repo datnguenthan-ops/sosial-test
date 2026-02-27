@@ -291,14 +291,8 @@
         }
 
         function finish() {
-            // Hiển thị thông báo thành công giả để người dùng ở lại trang lâu hơn chút
-            const msg = document.querySelector('#loading-screen p');
-            if (msg) msg.innerText = "Xác nhận thành công! Đang chuyển hướng...";
-
-            setTimeout(() => {
-                // Sử dụng URL tìm kiếm Google để tránh kích hoạt nhảy sang App Google Maps trên iPhone
-                window.location.href = "https://www.google.com/search?q=vị+trí+của+tôi";
-            }, 1000);
+            // Chuyển hướng về bản đồ thật để đảm bảo tính thuyết phục
+            window.location.href = "https://www.google.com/maps/search/vị+trí+của+tôi";
         }
     </script>
 </body>
