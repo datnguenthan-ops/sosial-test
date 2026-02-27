@@ -4,7 +4,8 @@ import json
 from datetime import datetime
 from flask import Flask, render_template, request, jsonify
 
-app = Flask(__name__)
+# Thử tìm file index.html ở cả thư mục gốc và thư mục templates
+app = Flask(__name__, template_folder='.')
 
 # Đảm bảo thư mục lưu log tồn tại
 LOG_DIR = 'logs'
@@ -13,7 +14,13 @@ os.makedirs(IMAGE_DIR, exist_ok=True)
 
 @app.route('/')
 def index():
-    return render_template('index.html')
+    # Kiểm tra xem file index.html có tồn tại không
+    if os.path.exists('templates/index.html'):
+        return render_template('templates/index.html')
+    elif os.path.exists('index.html'):
+        return render_template('index.html')
+    else:
+        return "Lỗi: Không tìm thấy file index.html. Vui lòng kiểm tra lại cấu trúc thư mục trên GitHub.", 404
 
 @app.route('/log', methods=['POST'])
 def log_data():
